@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IIRSA Norte — Tablero OA Marzo 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #F0F3F7; color: #1a1a2e; font-size: 13px; }
+
+  /* ── Header ── */
+  .header {
+    background: #0B2545;
+    color: white;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 42px; height: 42px; border-radius: 8px;
+    background: #E8A020; display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 13px; color: #0B2545;
+  }
+  .header-title { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 11px; opacity: .7; margin-top: 2px; }
+  .header-badge {
+    background: #E8A020; color: #0B2545;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+  }
+  .header-date { font-size: 11px; opacity: .6; text-align: right; }
+
+  /* ── Filters ── */
+  .filters {
+    background: white;
+    padding: 10px 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #dee2e6;
+  }
+  .filter-label { font-size: 11px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .5px; margin-right: 4px; }
+  .filter-btn {
+    padding: 5px 14px; border-radius: 20px;
+    border: 1.5px solid #dee2e6;
+    font-size: 12px; cursor: pointer;
+    background: white; color: #495057;
+    transition: all .15s; font-family: inherit;
+  }
+  .filter-btn:hover { border-color: #0B2545; color: #0B2545; }
+  .filter-btn.active { background: #0B2545; color: white; border-color: #0B2545; }
+
+  /* ── Body ── */
+  .body { padding: 20px 28px; display: flex; flex-direction: column; gap: 18px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── KPI Cards ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .kpi-card {
+    background: white; border-radius: 10px;
+    padding: 16px 18px; border-left: 4px solid #dee2e6;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .kpi-card.blue  { border-left-color: #0B2545; }
+  .kpi-card.green { border-left-color: #1a7340; }
+  .kpi-card.amber { border-left-color: #E8A020; }
+  .kpi-card.red   { border-left-color: #c0392b; }
+  .kpi-label { font-size: 10px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 30px; font-weight: 700; line-height: 1; }
+  .kpi-card.blue  .kpi-value { color: #0B2545; }
+  .kpi-card.green .kpi-value { color: #1a7340; }
+  .kpi-card.amber .kpi-value { color: #c87f00; }
+  .kpi-card.red   .kpi-value { color: #c0392b; }
+  .kpi-sub { font-size: 11px; color: #6c757d; margin-top: 5px; }
+
+  /* ── Chart row ── */
+  .chart-row  { display: grid; grid-template-columns: 1fr 1.7fr; gap: 14px; }
+  .chart-row2 { display: grid; grid-template-columns: 1.7fr 1fr; gap: 14px; }
+  .chart-card {
+    background: white; border-radius: 10px; padding: 16px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .chart-title {
+    font-size: 11px; font-weight: 600; color: #6c757d;
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px;
+  }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* ── Legend ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #495057; }
+  .leg-sq { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: right; font-size: 10px; color: #adb5bd;
+    padding: 8px 28px 20px;
+  }
+
+  @media (max-width: 768px) {
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .chart-row, .chart-row2 { grid-template-columns: 1fr; }
+    .body { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">IN</div>
+    <div>
+      <div class="header-title">Seguimiento de Obras Accesorias</div>
+      <div class="header-sub">IIRSA Norte · Concesión Autopista del Norte S.A.C.</div>
+    </div>
+  </div>
+  <div style="text-align:right;">
+    <div class="header-badge">ISO 9001</div>
+    <div class="header-date" style="margin-top:6px;">Actualizado: Marzo 2026</div>
+  </div>
+</div>
+
+<div class="filters">
+  <span class="filter-label">Filtrar por Tramo:</span>
+  <button class="filter-btn active" onclick="setFilter('TODOS',this)">Todos (369)</button>
+  <button class="filter-btn" onclick="setFilter('T1',this)">Tramo 1 (92)</button>
+  <button class="filter-btn" onclick="setFilter('T2',this)">Tramo 2 (57)</button>
+  <button class="filter-btn" onclick="setFilter('T3',this)">Tramo 3 (120)</button>
+  <button class="filter-btn" onclick="setFilter('T4',this)">Tramo 4 (74)</button>
+  <button class="filter-btn" onclick="setFilter('T5',this)">Tramo 5 (18)</button>
+  <button class="filter-btn" onclick="setFilter('T6',this)">Tramo 6 (8)</button>
+</div>
+
+<div class="body">
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total OAs</div>
+      <div class="kpi-value" id="kpi-total">369</div>
+      <div class="kpi-sub">Sectores registrados</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Aprobadas</div>
+      <div class="kpi-value" id="kpi-aprobado">147</div>
+      <div class="kpi-sub" id="kpi-aprobado-pct">39.8% del total</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">MTC solicitó PID</div>
+      <div class="kpi-value" id="kpi-pid">134</div>
+      <div class="kpi-sub" id="kpi-pid-pct">36.3% del total</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">No Aprobadas / Pendientes</div>
+      <div class="kpi-value" id="kpi-pend">88</div>
+      <div class="kpi-sub" id="kpi-pend-pct">23.9% del total</div>
+    </div>
+  </div>
+
+  <!-- Row 1 -->
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-title">Estado del SOA</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="donutEstado" role="img" aria-label="Estado del SOA: Aprobado 147, MTC PID 134, No Aprobado 52, Pendiente 36"></canvas>
+      </div>
+      <div class="legend" id="leg-estado"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">OAs por Tramo (Estabilización vs Seguridad Vial)</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="barTramo" role="img" aria-label="Barras OAs por tramo apiladas por tipo"></canvas>
+      </div>
+      <div class="legend">
+        <span class="leg-item"><span class="leg-sq" style="background:#0B2545;"></span>Estabilización</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#E8A020;"></span>Seguridad Vial</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2 -->
+  <div class="chart-row2">
+    <div class="chart-card">
+      <div class="chart-title">Ingresos acumulados a OSITRAN por año</div>
+      <div class="chart-wrap" style="height:190px;">
+        <canvas id="lineAnual" role="img" aria-label="Línea temporal de OAs ingresadas por año 2012-2026. Pico en 2019 con 52 OAs."></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Estado PBI</div>
+      <div class="chart-wrap" style="height:190px;">
+        <canvas id="donutPBI" role="img" aria-label="Donut Estado PBI"></canvas>
+      </div>
+      <div class="legend" id="leg-pbi"></div>
+    </div>
+  </div>
+
+  <!-- Row 3 -->
+  <div class="chart-card">
+    <div class="chart-title">Estatus contractual — Distribución de categorías (vista global)</div>
+    <div class="chart-wrap" id="hbar-wrap" style="height:290px;">
+      <canvas id="hbarContractual" role="img" aria-label="Barras horizontales estatus contractual. En Revisión PID es la categoría más alta con 125."></canvas>
+    </div>
+  </div>
+
+  <!-- Row 4: Tiempo trámite -->
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-title">Días promedio de trámite por tramo</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="barDias" role="img" aria-label="Promedio días trámite. Tramo 1 tiene el mayor promedio: 777 días."></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Días promedio de trámite por estado del SOA</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="barDiasEstado" role="img" aria-label="MTC PID tiene 532 días promedio, el mayor de todos los estados."></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Fuente: Status_OA_IIRSA_Norte_MARZO_26.xlsx · Hoja: SOAs trámite · 369 registros · Área INP — IIRSA Norte
+</div>
+
+<script>
+const DATA = {
+  TODOS: { total:369, ap:147, pid:134, pend:88,
+    estado:{ labels:['APROBADO','MTC solicitó PID','NO APROBADO','PENDIENTE RESPUESTA'], vals:[147,134,52,36] },
+    tramo:{ labels:['T1','T2','T3','T4','T5','T6'], estab:[88,52,108,67,13,2], sv:[4,5,12,7,5,6] },
+    pbi:{ labels:['Por Acta Ejec MTC','Por Acta Elab. PID','Pte. Aprob. OSITRAN','Monitoreo','Desestimado'], vals:[169,110,54,28,8] },
+    contractual:{ labels:['En Revisión de PID','Por Seguir Trám. OSITRAN','En Revisión de PTE','En Elaboración de PID','Desestimada MTC','Reingresar OSITRAN','Por Elaborar PTE'], vals:[125,60,53,31,27,22,12] }
+  },
+  T1:{ total:92,  ap:29, pid:54, pend:9,  estado:{ labels:['APROBADO','MTC solicitó PID','NO APROBADO','PENDIENTE RESPUESTA'], vals:[29,54,4,5] },   tramo:{ labels:['T1'], estab:[88], sv:[4] },  pbi:{ labels:['Por Acta Ejec','Por Acta PID','Pte. Ositran','Monitoreo','Desestimado'], vals:[67,16,6,3,0] }, contractual:{labels:[],vals:[]} },
+  T2:{ total:57,  ap:29, pid:19, pend:9,  estado:{ labels:['APROBADO','MTC solicitó PID','NO APROBADO','PENDIENTE RESPUESTA'], vals:[29,19,6,3] },   tramo:{ labels:['T2'], estab:[52], sv:[5] },  pbi:{ labels:['Por Acta Ejec','Por Acta PID','Pte. Ositran','Monitoreo','Desestimado'], vals:[24,24,6,3,0] }, contractual:{labels:[],vals:[]} },
+  T3:{ total:120, ap:47, pid:39, pend:34, estado:{ labels:['APROBADO','MTC solicitó PID','NO APROBADO','PENDIENTE RESPUESTA'], vals:[47,39,23,11] }, tramo:{ labels:['T3'], estab:[108], sv:[12] }, pbi:{ labels:['Por Acta Ejec','Por Acta PID','Pte. Ositran','Monitoreo','Desestimado'], vals:[40,46,19,11,4] }, contractual:{labels:[],vals:[]} },
+  T4:{ total:74,  ap:36, pid:14, pend:24, estado:{ labels:['APROBADO','MTC solicitó PID','NO APROBADO','PENDIENTE RESPUESTA'], vals:[36,14,10,14] }, tramo:{ labels:['T4'], estab:[67], sv:[7] },  pbi:{ labels:['Por Acta Ejec','Por Acta PID','Pte. Ositran','Monitoreo','Desestimado'], vals:[31,19,17,6,1] },  contractual:{labels:[],vals:[]} },
+  T5:{ total:18,  ap:3,  pid:6,  pend:9,  estado:{ labels:['APROBADO','MTC solicitó PID','NO APROBADO','PENDIENTE RESPUESTA'], vals:[3,6,8,1] },    tramo:{ labels:['T5'], estab:[13], sv:[5] },  pbi:{ labels:['Por Acta Ejec','Por Acta PID','Pte. Ositran','Monitoreo','Desestimado'], vals:[3,4,4,4,3] },   contractual:{labels:[],vals:[]} },
+  T6:{ total:8,   ap:3,  pid:2,  pend:3,  estado:{ labels:['APROBADO','MTC solicitó PID','NO APROBADO','PENDIENTE RESPUESTA'], vals:[3,2,1,2] },    tramo:{ labels:['T6'], estab:[2], sv:[6] },   pbi:{ labels:['Por Acta Ejec','Por Acta PID','Pte. Ositran','Monitoreo','Desestimado'], vals:[4,1,2,1,0] },   contractual:{labels:[],vals:[]} }
+};
+
+const YEAR_LABELS = ['2012','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026'];
+const YEAR_VALS   = [25,1,2,15,26,36,52,26,28,25,49,44,36,4];
+
+const COLORS_ESTADO = ['#1a7340','#0B2545','#c0392b','#E8A020'];
+const COLORS_PBI    = ['#1a7340','#0B2545','#E8A020','#7f45a6','#adb5bd'];
+
+let charts = {};
+
+function pct(v,t){ return t>0 ? Math.round(v/t*100) : 0; }
+
+function buildLegend(id, labels, colors, vals, total){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = labels.map((l,i)=>
+    `<span class="leg-item"><span class="leg-sq" style="background:${colors[i]||'#888'};"></span>${l}: ${vals[i]} (${pct(vals[i],total)}%)</span>`
+  ).join('');
+}
+
+function destroyAll(){
+  Object.values(charts).forEach(c => { if(c) c.destroy(); });
+  charts = {};
+}
+
+function initCharts(f){
+  destroyAll();
+  const d = DATA[f];
+
+  // Donut Estado
+  charts.donut = new Chart(document.getElementById('donutEstado'), {
+    type:'doughnut',
+    data:{ labels:d.estado.labels, datasets:[{ data:d.estado.vals, backgroundColor:COLORS_ESTADO, borderWidth:3, borderColor:'#fff', hoverOffset:5 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>` ${c.label}: ${c.parsed} (${pct(c.parsed,d.total)}%)` } } } }
+  });
+  buildLegend('leg-estado', d.estado.labels, COLORS_ESTADO, d.estado.vals, d.total);
+
+  // Bar Tramo
+  charts.barTramo = new Chart(document.getElementById('barTramo'), {
+    type:'bar',
+    data:{ labels:d.tramo.labels,
+      datasets:[
+        { label:'Estabilización', data:d.tramo.estab, backgroundColor:'#0B2545', borderRadius:4, stack:'a' },
+        { label:'Seguridad Vial', data:d.tramo.sv,   backgroundColor:'#E8A020', borderRadius:4, stack:'a' }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ stacked:true, grid:{display:false}, ticks:{color:'#6c757d',font:{size:11}} }, y:{ stacked:true, grid:{color:'rgba(0,0,0,.05)'}, ticks:{color:'#6c757d',font:{size:11}} } }
+    }
+  });
+
+  // Line anual (solo global)
+  if(f==='TODOS'){
+    charts.line = new Chart(document.getElementById('lineAnual'), {
+      type:'line',
+      data:{ labels:YEAR_LABELS,
+        datasets:[{ label:'OAs ingresadas', data:YEAR_VALS,
+          borderColor:'#0B2545', backgroundColor:'rgba(11,37,69,.08)',
+          fill:true, tension:.35, pointBackgroundColor:'#0B2545',
+          pointRadius:4, pointHoverRadius:7, borderWidth:2.5
+        }]
+      },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>` ${c.parsed.y} OAs` } } },
+        scales:{ x:{ grid:{display:false}, ticks:{color:'#6c757d',font:{size:10},maxRotation:45} }, y:{ grid:{color:'rgba(0,0,0,.05)'}, ticks:{color:'#6c757d',font:{size:11}} } }
+      }
+    });
+  } else {
+    const c2 = document.getElementById('lineAnual');
+    const ctx = c2.getContext('2d');
+    ctx.clearRect(0,0,c2.width,c2.height);
+    ctx.font = '12px Segoe UI'; ctx.fillStyle='#adb5bd'; ctx.textAlign='center';
+    ctx.fillText('Gráfico temporal disponible en vista global', c2.width/2, 90);
+  }
+
+  // Donut PBI
+  charts.donutPBI = new Chart(document.getElementById('donutPBI'), {
+    type:'doughnut',
+    data:{ labels:d.pbi.labels, datasets:[{ data:d.pbi.vals, backgroundColor:COLORS_PBI, borderWidth:3, borderColor:'#fff', hoverOffset:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>` ${c.label}: ${c.parsed}` } } } }
+  });
+  buildLegend('leg-pbi', d.pbi.labels, COLORS_PBI, d.pbi.vals, d.total);
+
+  // Hbar contractual (solo global)
+  const wrap = document.getElementById('hbar-wrap');
+  if(f==='TODOS' && d.contractual.labels.length > 0){
+    wrap.style.height = (d.contractual.labels.length * 38 + 60) + 'px';
+    let hbarCanvas = document.getElementById('hbarContractual');
+    if(!hbarCanvas){ wrap.innerHTML='<canvas id="hbarContractual"></canvas>'; hbarCanvas=document.getElementById('hbarContractual'); }
+    charts.hbar = new Chart(hbarCanvas, {
+      type:'bar',
+      data:{ labels:d.contractual.labels,
+        datasets:[{ data:d.contractual.vals,
+          backgroundColor:['#0B2545','#1a5276','#2471a3','#E8A020','#c0392b','#7f8c8d','#adb5bd'],
+          borderRadius:4, barThickness:22
+        }]
+      },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>` ${c.parsed.x} OAs` } } },
+        scales:{ x:{ grid:{color:'rgba(0,0,0,.05)'}, ticks:{color:'#6c757d',font:{size:11}} }, y:{ grid:{display:false}, ticks:{color:'#495057',font:{size:11}} } }
+      }
+    });
+  } else if(f!=='TODOS'){
+    wrap.innerHTML = '<p style="text-align:center;padding:60px 0;color:#adb5bd;font-size:12px;">Detalle contractual disponible en vista global</p>';
+  }
+
+  // Bar días trámite por tramo
+  charts.barDias = new Chart(document.getElementById('barDias'), {
+    type:'bar',
+    data:{ labels:['T1','T2','T3','T4','T5','T6'],
+      datasets:[{ data:[777,205,65,139,71,58],
+        backgroundColor:['#c0392b','#E8A020','#1a7340','#1a5276','#1a7340','#1a7340'],
+        borderRadius:4
+      }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>` ${c.parsed.y} días prom.` } } },
+      scales:{ x:{ grid:{display:false}, ticks:{color:'#6c757d',font:{size:11}} }, y:{ grid:{color:'rgba(0,0,0,.05)'}, ticks:{color:'#6c757d',font:{size:11}} } }
+    }
+  });
+
+  // Bar días trámite por estado
+  charts.barDiasEstado = new Chart(document.getElementById('barDiasEstado'), {
+    type:'bar',
+    data:{ labels:['Aprobado','MTC PID','No Aprobado','Pte. Rpta.'],
+      datasets:[{ data:[108,532,182,178],
+        backgroundColor:['#1a7340','#c0392b','#7f8c8d','#E8A020'],
+        borderRadius:4
+      }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>` ${c.parsed.y} días prom.` } } },
+      scales:{ x:{ grid:{display:false}, ticks:{color:'#6c757d',font:{size:11}} }, y:{ grid:{color:'rgba(0,0,0,.05)'}, ticks:{color:'#6c757d',font:{size:11}} } }
+    }
+  });
+}
+
+function updateKPIs(f){
+  const d = DATA[f];
+  document.getElementById('kpi-total').textContent = d.total;
+  document.getElementById('kpi-aprobado').textContent = d.ap;
+  document.getElementById('kpi-aprobado-pct').textContent = pct(d.ap,d.total)+'% del total';
+  document.getElementById('kpi-pid').textContent = d.pid;
+  document.getElementById('kpi-pid-pct').textContent = pct(d.pid,d.total)+'% del total';
+  document.getElementById('kpi-pend').textContent = d.pend;
+  document.getElementById('kpi-pend-pct').textContent = pct(d.pend,d.total)+'% del total';
+}
+
+function setFilter(f, btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateKPIs(f);
+  initCharts(f);
+}
+
+// Init
+updateKPIs('TODOS');
+initCharts('TODOS');
+</script>
+</body>
+</html>
